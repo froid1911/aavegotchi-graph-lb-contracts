@@ -5,15 +5,27 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Registry is Ownable {
 
-    // subgraphName => subgraphHash
-    mapping(string => string) subgraphHashes;
 
-    // subgraphName => servers[]
+    struct SubgraphHash {
+        string current;
+        string last;
+    }
+
+    // subgraphName => subgraphHash
+    mapping(string => string) subgraphHashesPending;
+
+    // subgraphName => subgraphHash
+    mapping(string => string) subgraphHashesCurrent;
+
+    // subgraphId => servers[]
     mapping(string => string[]) subgraphServers;
 
-    event SubgraphDeployed(string _name, string _hash);
-    event ServerAdded(string _name, string _server);
+    // subgraphId => servers[]
+    mapping(string => string[]) syncedServers;
 
+    event SubgraphPublished(string _name, string _hash);
+    event ServerAdded(string _name, string _server);
+    event SubgraphSynced(string _name, string _hash, string _server);
 
     function registerServer(string memory _subgraphName, string memory _server) onlyOwner public {
         string[] memory servers = subgraphServers[_subgraphName];
@@ -29,11 +41,14 @@ contract Registry is Ownable {
     }
 
     function publishSubgraph(string memory _name, string memory _hash) onlyOwner public {
-        subgraphHashes[_name] = _hash;
-        emit SubgraphDeployed(_name, _hash);
+        subgraphHashesPending[_name] = _hash;
+        emit SubgraphPublished(_name, _hash);
     }
 
     function getServers(string calldata _name) view public returns (string[] memory) {
+
+        // fetch 
+
         return subgraphServers[_name];
     }
 
@@ -41,5 +56,16 @@ contract Registry is Ownable {
         return (keccak256(bytes(a)) == keccak256(bytes(b)));
     } 
 
+    function subgraphSynced(string memory _name, string memory _hash, string memory _server) onlyOwner public {
+        string[] memory servers = syncedServers[_hash];
+        for(uint i=0;i<servers.length; i++) {
+            bool serverExists = compareStrings(servers[i], _server);
+            if(serverExists) {
+                return;
+            }
+        }
 
+        syncedServers[_hash].push(_server);
+        emit SubgraphSynced(_name, _hash, _server);
+    }
 }

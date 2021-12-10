@@ -22,20 +22,24 @@ describe("Registry contract", function () {
             .withArgs(subgraphName, subgraphHash);
     })
 
-    it("Emits ServerAdded event if server is added", async function () {
+    it("Emits ServerPublished event if server is added", async function () {
         await expect(hardhatRegistry.registerServer(subgraphName, server))
-            .to.emit(hardhatRegistry, 'ServerAdded')
+            .to.emit(hardhatRegistry, 'ServerPublished')
             .withArgs(subgraphName, server);
     })
 
-    it("Doesn't emit ServerAdded event if server is already added", async function () {
+    it("Doesn't emit ServerPublished event if server is already added", async function () {
         await expect(hardhatRegistry.registerServer(subgraphName, server))
-            .to.not.emit(hardhatRegistry, 'ServerAdded')
+            .to.not.emit(hardhatRegistry, 'ServerPublished')
             .withArgs(subgraphName, server);
     })
 
-    it("Fetches Servers for specific subgraph", async function () {
-        const subgraphName = "aavegotchi-core-matic";
+    it("Emits SubgraphSynced event if subgraphSynced function is called", async function () {
+        let servers = await hardhatRegistry.getServers(subgraphName)
+        expect(servers).to.contain(server)
+    })
+
+    it("Fetches Servers for specific subgraph with synced servers", async function () {
         let servers = await hardhatRegistry.getServers(subgraphName)
         expect(servers).to.contain(server)
     })
