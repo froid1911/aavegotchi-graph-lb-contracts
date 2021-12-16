@@ -5,12 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Registry is Ownable {
 
-
-    struct SubgraphHash {
-        string current;
-        string last;
-    }
-
     // subgraphName => subgraphHash
     mapping(string => string) subgraphHashesPending;
 
@@ -27,9 +21,12 @@ contract Registry is Ownable {
     event ServerAdded(string _server, address _owner);
     event SubgraphSynced(string _name, string _hash, string _server);
 
-    function registerServer(string memory _server, address memory _owner) onlyOwner public {
-        address memory owner = serversOwnedBy[_server];
-        require(owner == address(0), "Server already registered");
+    modifier serverOwnedBy(string memory _server) {
+        require(msg.sender == serversOwnedBy[_server]);
+        _;
+    }
+
+    function registerServer(string memory _server, address _owner) onlyOwner public {
         serversOwnedBy[_server] = _owner;
         emit ServerAdded(_server, _owner);
     }
@@ -40,23 +37,20 @@ contract Registry is Ownable {
     }
 
     function getServers(string calldata _name) view public returns (string[] memory) {
-
-        // fetch 
-
-        return subgraphServers[_name];
+        return syncedServers[subgraphHashesCurrent[_name]];
     }
 
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
         return (keccak256(bytes(a)) == keccak256(bytes(b)));
     } 
 
-    function subgraphSynced(string memory _name, string memory _hash, string memory _server) onlyOwner public {
-        string[] memory servers = syncedServers[_hash];
-        for(uint i=0;i<servers.length; i++) {
-            bool serverExists = compareStrings(servers[i], _server);
-            if(!serverExists) {
-                return;
-            }
+    function subgraphSynced(string memory _name, string memory _hash, string memory _server) serverOwnedBy(_server) public {
+        string memory current = subgraphHashesCurrent[_name];
+        string memory pending = subgraphHashesPending[_name];
+
+        // activate pending subgraph
+        if(compareStrings(pending, _hash) && !compareStrings(current, _hash)) {
+            subgraphHashesCurrent[_name] = _hash;
         }
 
         syncedServers[_hash].push(_server);
