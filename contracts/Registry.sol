@@ -56,4 +56,21 @@ contract Registry is Ownable {
         syncedServers[_hash].push(_server);
         emit SubgraphSynced(_name, _hash, _server);
     }
+
+    function removeServerFromSubgraph(string memory _hash, string memory _server) onlyOwner public {
+        string[] memory servers = syncedServers[_hash];
+        uint j = servers.length;
+        for(uint i=0; i<j; i++) {
+            if(compareStrings(servers[i], _server)) {
+                j=i;
+                break;
+            }
+        }
+
+        for (uint i = j; i < servers.length - 1; i++) {
+            servers[i] = servers[i + 1];
+        }
+
+        syncedServers[_hash] = servers;
+    }
 }
