@@ -5,13 +5,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Registry is Ownable {
 
-    // subgraphName => subgraphHash
+    // subgraphName => subgraphId (pending)
     mapping(string => string) subgraphHashesPending;
 
-    // subgraphName => subgraphHash
+    // subgraphName => subgraphId (current)
     mapping(string => string) subgraphHashesCurrent;
 
-    // subgraphId => servers[]
+    // server => owner
     mapping(string => address) serversOwnedBy;
 
     // subgraphId => servers[]
